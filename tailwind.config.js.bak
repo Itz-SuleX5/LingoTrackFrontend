@@ -1,0 +1,19 @@
+import colors from 'tailwindcss/colors'
+
+export default {
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  // keep a compact safelist with patterns that cover dynamic color classes
+  safelist: [
+    { pattern: /^(bg|text|border)-(red|blue|green|yellow|purple|orange|pink|indigo|teal|cyan|lime|emerald|fuchsia|rose|violet|amber|sky|slate|gray|zinc|neutral|stone)-(50|100|200|300|400|500|600|700|800|900|950)$/ }
+  ],
+
+  theme: {
+    extend: {
+      colors: {
+        // include the official Tailwind color palette so dynamic classes resolve
+        ...colors,
+      }
+    }
+  },
+  plugins: []
+}
