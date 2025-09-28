@@ -1,8 +1,8 @@
-import {useState} from 'react';
+import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
 export function useRegisterUser() {
-    const { user, getAccessTokenSilently } = useAuth0();
+    const { user, getIdTokenClaims } = useAuth0();
     const [level, setLevel] = useState("B0");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -16,13 +16,14 @@ export function useRegisterUser() {
         setError(null);
 
         try {
-            const token = await getAccessTokenSilently();
+            const claims = await getIdTokenClaims();
+            const token = claims.__raw;
 
             const payload = {
                 username: user.name,
-                profile_picture_url : user.picture,
+                profile_picture_url: user.picture,
                 current_level: level,
-                words_known_count : 0,
+                words_known_count: 0,
                 words_learned_count: 0,
                 sentences_correct_count: 0,
             };
@@ -30,7 +31,7 @@ export function useRegisterUser() {
             const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type' : 'application/json',
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(payload)
@@ -40,15 +41,15 @@ export function useRegisterUser() {
         } catch (err) {
             setError(err.message);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     };
 
     return {
         level,
         handleLevelChange,
-        submitUser, 
-        loading, 
+        submitUser,
+        loading,
         error
     };
 }
