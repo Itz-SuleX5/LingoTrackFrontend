@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Volume2, House, ChartColumn } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react'; // ← Agrega este import
 import { useSubmitForm } from "../../hooks/feedback";
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useRandomWord } from '../../hooks/useRandomWord';
@@ -8,6 +9,8 @@ import Progress from "./Progress";
 import { motion } from 'framer-motion';
 
 const Home = () => {
+  const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+  
   const [formData, setFormData] = useState({
     simplePresent: '',
     presentProgressive: '',
@@ -19,6 +22,8 @@ const Home = () => {
   const { word, loading: wordLoading, refetch } = useRandomWord();
   const { markWord } = useMarkWord();
   const [selectedSection, setSelectedSection] = useState(0);
+
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,6 +49,14 @@ const Home = () => {
   const handleSkip = () => {
     refetch();
   };
+
+  if (authLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Cargando autenticación...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <div className="min-h-screen flex items-center justify-center">No estás autenticado. Inicia sesión.</div>;
+  }
 
   return (
     <div className="min-h-screen justify-between flex flex-col mx-auto overflow-y-auto relative">
@@ -142,7 +155,7 @@ const Home = () => {
               </div>
             </div>
           )}
-                    {selectedSection === 1 && <Progress profile={profile} />}
+          {selectedSection === 1 && <Progress profile={profile} />}
         </>
       )}
 

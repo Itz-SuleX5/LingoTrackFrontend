@@ -26,7 +26,6 @@ const Progress = ({profile}) => {
 
     fetchToken();
   }, [getAccessTokenSilently]);
-    console.log(token)
     return (
         <div className="w-11/12 mx-auto mt-4 flex flex-col gap-4">
             <div className="bg-white border border-orange-200 rounded-xl flex flex-col md:flex-row px-8 py-8 items-center gap-4">
@@ -34,8 +33,6 @@ const Progress = ({profile}) => {
                 {showDropdown && (
                     <div className="flex flex-col absolute bg-white shadow border rounded-md border-gray-200 top-30 pt-2">
                         <h1 className="font-semibold px-4 pb-2">{firstName}</h1>
-                        <h1>{token}</h1>
-                        <a href={user.picture}>{user.picture}</a>
                         <div className="flex flex-col border-y-2 w-full">
                            <button className="flex gap-2 px-4 hover:bg-gray-50 py-2">
                                 <Users strokeWidth={1.5} className="text-gray-700"/>
