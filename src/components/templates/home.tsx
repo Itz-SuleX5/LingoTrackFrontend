@@ -168,6 +168,8 @@ const Home = () => {
                 </button>
               </div>
 
+              <h1 className="text-gray-700 text-sm">{word.translation}</h1>
+
               <div className="bg-gray-50 text-gray-500 p-2 rounded-md">
                 {word.group_count} personas de {word.level} conocen esta palabra
               </div>
