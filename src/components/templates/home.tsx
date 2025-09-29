@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Volume2, House, ChartColumn } from 'lucide-react';
-import { useAuth0 } from '@auth0/auth0-react'; // ← Agrega este import
+import { useAuth0 } from '@auth0/auth0-react';
 import { useSubmitForm } from "../../hooks/feedback";
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useRandomWord } from '../../hooks/useRandomWord';
@@ -14,16 +14,15 @@ const Home = () => {
   const [formData, setFormData] = useState({
     simplePresent: '',
     presentProgressive: '',
-    simplePast: ''
+    simplePast: '',
+    pastProgressive: ''
   });
 
   const { profile, loading, showModal, level, setLevel, registerUser } = useUserProfile();
-  const { submitForm, isLoading, response } = useSubmitForm();
   const { word, loading: wordLoading, refetch } = useRandomWord();
+  const { submitForm, isLoading, response } = useSubmitForm(word?.base);
   const { markWord } = useMarkWord();
   const [selectedSection, setSelectedSection] = useState(0);
-
-  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,13 +33,13 @@ const Home = () => {
     await submitForm(formData);
   };
 
-  const speak = (text: string) => {
+  const speak = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleMark = async (status: 'known' | 'used') => {
+  const handleMark = async (status) => {
     if (!word?.id) return;
     await markWord(word.id, status);
     refetch();
@@ -48,6 +47,35 @@ const Home = () => {
 
   const handleSkip = () => {
     refetch();
+  };
+
+  const isFormValid = () => {
+    if (!word || !formData.simplePresent || !formData.presentProgressive || !formData.simplePast || !formData.pastProgressive) {
+      return false;
+    }
+    
+    const simplePresent = formData.simplePresent.toLowerCase();
+    const presentProgressive = formData.presentProgressive.toLowerCase();
+    const simplePast = formData.simplePast.toLowerCase();
+    const pastProgressive = formData.pastProgressive.toLowerCase();
+    
+    // Verificar Simple Present (debe contener word.base o word.s_form)
+    const baseVerb = word.base.toLowerCase();
+    const sForm = word.s_form ? word.s_form.toLowerCase() : (baseVerb + 's');
+    const hasBaseInPresent = simplePresent.includes(baseVerb) || simplePresent.includes(sForm);
+    
+    // Verificar Present Progressive (debe contener word.ing)
+    const ingForm = word.ing ? word.ing.toLowerCase() : (baseVerb + 'ing');
+    const hasIngInProgressive = presentProgressive.includes(ingForm);
+    
+    // Verificar Simple Past (debe contener word.past)
+    const pastForm = word.past.toLowerCase().split('(')[0].trim();
+    const hasPastInSimplePast = simplePast.includes(pastForm);
+    
+    // Verificar Past Progressive (debe contener word.ing)
+    const hasIngInPastProgressive = pastProgressive.includes(ingForm);
+    
+    return hasBaseInPresent && hasIngInProgressive && hasPastInSimplePast && hasIngInPastProgressive;
   };
 
   if (authLoading) {
@@ -90,25 +118,60 @@ const Home = () => {
                   <Volume2 color="orange" size={22} />
                 </button>
               </div>
+
               <div className="flex items-center gap-2">
-                <h1 className="text-gray-600 text-xl">{word.past}</h1>
-                <button className="hover:bg-orange-50 p-2 rounded-md cursor-pointer" onClick={() => speak(word.past)}>
+                {/* Past */}
+                <h1 className="text-gray-600 text-xl">
+                  {word.past.includes('(') ? (
+                    <>
+                      {word.past.split('(')[0].trim()} <strong>({word.past.split('(')[1]}</strong>
+                    </>
+                  ) : (
+                    word.past
+                  )}
+                </h1>
+                <button
+                  className="hover:bg-orange-50 p-2 rounded-md cursor-pointer"
+                  onClick={() => speak(word.past.includes('(') ? word.past.split('(')[0].trim() : word.past)}
+                >
                   <Volume2 color="orange" size={16} />
                 </button>
+
                 <h1 className="text-gray-700">/</h1>
-                <h1 className="text-gray-600 text-xl">{word.progressive}</h1>
-                <button className="hover:bg-orange-50 p-2 rounded-md cursor-pointer" onClick={() => speak(word.progressive)}>
+
+                {/* Past Participle */}
+                <h1 className="text-gray-600 text-xl">
+                  {word.past_participle.includes('(') ? (
+                    <>
+                      {word.past_participle.split('(')[0].trim()} <strong>({word.past_participle.split('(')[1]}</strong>
+                    </>
+                  ) : (
+                    word.past_participle
+                  )}
+                </h1>
+                <button
+                  className="hover:bg-orange-50 p-2 rounded-md cursor-pointer"
+                  onClick={() =>
+                    speak(word.past_participle.includes('(') ? word.past_participle.split('(')[0].trim() : word.past_participle)
+                  }
+                >
                   <Volume2 color="orange" size={16} />
                 </button>
               </div>
-              <h1 className="italic text-xl">{word.translation}</h1>
+
+              <h1 className="italic text-xl">{word.meaning}</h1>
+
               <div className="flex items-center gap-2">
                 <h1 className="text-amber-500">"{word.example}"</h1>
                 <button className="hover:bg-orange-50 p-2 rounded-md cursor-pointer" onClick={() => speak(word.example)}>
                   <Volume2 color="orange" size={16} />
                 </button>
               </div>
-              <div className="bg-gray-50 text-gray-500 p-2 rounded-md">{word.group_count} personas de {word.level} conocen esta palabra</div>
+
+              <div className="bg-gray-50 text-gray-500 p-2 rounded-md">
+                {word.group_count} personas de {word.level} conocen esta palabra
+              </div>
+
               <div className="w-11/12 gap-2 flex flex-col">
                 <h1 className="text-left">Simple Present</h1>
                 <input type="text" name="simplePresent" value={formData.simplePresent} placeholder="Example: I run every day" className="border w-full p-2 rounded-md" onChange={handleChange} />
@@ -116,6 +179,9 @@ const Home = () => {
                 <input type="text" name="presentProgressive" value={formData.presentProgressive} placeholder="Example: I'm running right now" className="border w-full p-2 rounded-md" onChange={handleChange} />
                 <h1 className="text-left">Simple Past</h1>
                 <input type="text" name="simplePast" value={formData.simplePast} placeholder="Example: I ran yesterday" className="border w-full p-2 rounded-md" onChange={handleChange} />
+                <h1 className="text-left">Past Progressive</h1>
+                <input type="text" name="pastProgressive" value={formData.pastProgressive} placeholder="Example: I was running when you called" className="border w-full p-2 rounded-md" onChange={handleChange} />
+
                 {response && (
                   <div className="flex flex-col gap-2 mt-2">
                     {response.choices[0].message.content.split('|').map((feedback, index) => {
@@ -126,7 +192,7 @@ const Home = () => {
                         const explanation = `(${parts[1].split('(')[1]}`;
                         return (
                           <div key={index} className={`p-3 rounded-md ${isOk ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                            {parts[0]} → <span className="text-green-600">{correction}</span> {explanation}
+                            {parts[0]} → <span className="text-green-600">{correction}</span> <strong>{explanation}</strong>
                           </div>
                         );
                       }
@@ -139,9 +205,17 @@ const Home = () => {
                   </div>
                 )}
               </div>
-              <motion.button className="bg-amber-500 text-white p-3 rounded-md my-2 cursor-pointer" whileHover={{ scale: 1.1, rotate: 1.2, transition: { duration: 0.2 } }} whileTap={{ scale: 1.1, rotate: -10, transition: { duration: 0.2 } }} onClick={handleSubmit} disabled={isLoading}>
+
+              <motion.button 
+                className={`text-white p-3 rounded-md my-2 ${isFormValid() && !isLoading ? 'bg-amber-500 cursor-pointer' : 'bg-gray-300 cursor-not-allowed'}`}
+                whileHover={isFormValid() && !isLoading ? { scale: 1.1, rotate: 1.2, transition: { duration: 0.2 } } : {}} 
+                whileTap={isFormValid() && !isLoading ? { scale: 1.1, rotate: -10, transition: { duration: 0.2 } } : {}} 
+                onClick={handleSubmit} 
+                disabled={isLoading || !isFormValid()}
+              >
                 Hacer revision con IA
               </motion.button>
+
               <div className="flex text-white grid grid-cols-3 gap-2 w-full">
                 <motion.button className="bg-gray-700 py-3 rounded-md cursor-pointer" whileHover={{ scale: 1.1, rotate: 1.2, transition: { duration: 0.2 } }} whileTap={{ scale: 1.1, rotate: -10, transition: { duration: 0.2 } }} onClick={handleSkip}>
                   Saltar
